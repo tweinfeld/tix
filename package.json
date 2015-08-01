@@ -1,0 +1,35 @@
+{
+  "name": "tix",
+  "version": "1.0.0",
+  "description": "A simple javascript reactive programming toolkit.",
+  "main": "tix.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tweinfeld/tix.git"
+  },
+  "keywords": [
+    "reactive",
+    "functional",
+    "utility",
+    "array",
+    "time",
+    "map",
+    "filter",
+    "observable",
+    "events",
+    "ticks",
+    "events"
+  ],
+  "author": "Tal Weinfeld <talw@webwise.co.il> (http://webwise.co.il)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tweinfeld/tix/issues"
+  },
+  "homepage": "https://github.com/tweinfeld/tix",
+  "dependencies": {
+    "lodash": "^3.10.0"
+  }
+}
