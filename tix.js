@@ -74,6 +74,23 @@
                     console.log(logTemplate({ type: val.type, value: val.value() }));
                 });
                 return interface;
+            },
+            take: function(count){
+                var counter = 0;
+                return Tix.create(function(value, error, end){
+                    var sub = function(rawVal){
+                        rawVal instanceof TixValue && value(rawVal.value());
+                        rawVal instanceof TixError && error(rawVal.value());
+                        rawVal instanceof TixEnd && end(rawVal.value());
+
+                        (rawVal instanceof TixValue) && (++counter >= count) && end('ended');
+                    };
+                    addSubscriber(sub);
+
+                    return function(){
+                        removeSubscriber(sub);
+                    };
+                });
             }
         };
         return interface;
