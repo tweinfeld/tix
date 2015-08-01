@@ -20,9 +20,11 @@ var stream = Tix.create(function(value, error, end){
 });
 
 var c = console.log.bind(console);
-//stream.subscribe(c);
-stream.log().onValue(function(val){ console.log('VALUE', val); })
+stream.log().onValue(function(val){ console.log('VALUE', val); });
 
+var callbackStream = Tix.fromCallback(function(cb){
+    setTimeout(function(){
+        cb('Callback was called');
+    }, 1000);
+}).log();
 
-//stream.unsubscribe(c);
-//stream.subscribe(c);

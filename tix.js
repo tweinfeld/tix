@@ -15,6 +15,8 @@
         TixError = typeFactory('error'),
         TixEnd = typeFactory('end');
 
+    var logTemplate = _.template('<<%-type%>> <%-value%>');
+
     // Tix's basic stream creation routine (rudimentary building block)
     Tix.create = function(generator){
         var _this = this;
@@ -69,12 +71,21 @@
             },
             log: function(){
                 addSubscriber(function(val){
-                    console.log(_.template('<<%-type%>> <%-value%>')({ type: val.type, value: val.value() }));
+                    console.log(logTemplate({ type: val.type, value: val.value() }));
                 });
                 return interface;
             }
         };
         return interface;
+    };
+
+    Tix.fromCallback = function(generator){
+        return Tix.create(function(value, error, end){
+            generator(function(val){
+                value(val);
+                end();
+            });
+        });
     }
 
 })(window["Tix"] = {});
