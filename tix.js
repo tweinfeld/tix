@@ -30,13 +30,18 @@
 
         var subscribers = [];
         var deactivate = _.noop;
-        var deliver = function(dt){ _.invoke(subscribers, 'call', null, dt); },
+        var deliver = function(dt){
+                _.invoke(subscribers, 'call', null, dt);
+                dt instanceof TixEnd && voidStream();
+            },
             value = _.flow(function(val){ return new TixValue(val); }, deliver),
             error = _.flow(function(val){ return new TixError(val); }, deliver),
-            end = _.flow(function(val){ return new TixEnd(val); }, deliver, voidStream);
+            end = _.flow(function(val){ return new TixEnd(val); }, deliver);
 
         var activate = _.once(_.partial(generator,
-            function(val){ value(val); },
+            function(val){
+                ((val instanceof TixValue || val instanceof TixEnd || val instanceof TixError) ? deliver : value)(val);
+            },
             function(val){ error(val); },
             function(val){ end(val); }));
 
@@ -79,17 +84,22 @@
                 var counter = 0;
                 return Tix.create(function(value, error, end){
                     var sub = function(rawVal){
-                        rawVal instanceof TixValue && value(rawVal.value());
-                        rawVal instanceof TixError && error(rawVal.value());
-                        rawVal instanceof TixEnd && end(rawVal.value());
-
-                        (rawVal instanceof TixValue) && (++counter >= count) && end('ended');
+                        value(rawVal);
+                        (rawVal instanceof TixValue) && (++counter >= count) && end();
                     };
                     addSubscriber(sub);
 
-                    return function(){
-                        removeSubscriber(sub);
-                    };
+                    return _.partial(removeSubscriber, sub);
+                });
+            },
+            map: function(mapper){
+                return Tix.create(function(value, error, end){
+                     var sub = function(rawVal){
+                        value(rawVal instanceof TixValue ? mapper(rawVal.value()) : rawVal);
+                     };
+
+                    addSubscriber(sub);
+                    return _.partial(removeSubscriber, sub);
                 });
             }
         };

@@ -7,9 +7,9 @@ var stream = Tix.create(function(value, error, end){
         _.sample([value, error])(counter++);
     }, 1000);
 
-    //var anotherTimer = setTimeout(function(){
-    //    end('Done!');
-    //}, 4000);
+    /*var anotherTimer = setTimeout(function(){
+        end('Done!');
+    }, 4000);*/
 
     // Return a function for when a stream is deactivated
     return function(){
@@ -20,7 +20,10 @@ var stream = Tix.create(function(value, error, end){
 });
 
 var c = console.log.bind(console);
-stream.take(5).onValue(function(val){ console.log('VALUE', val); });
+stream
+    .map(function(x){ return x * 2; })
+    .take(5)
+    .onValue(function(val){ console.log('VALUE', val); });
 
 //var callbackStream = Tix.fromCallback(function(cb){
 //    setTimeout(function(){
