@@ -1,5 +1,5 @@
 // Create a custom stream from timer ticks
-var stream = Tix.create(function(value, error, end){
+var stream = Tix.stream(function(value, error, end){
     console.log('Stream ACTIVATION routine!');
     var counter = 0;
     var timer = setInterval(function(){
@@ -21,8 +21,9 @@ var stream = Tix.create(function(value, error, end){
 
 var c = console.log.bind(console);
 stream
+    .filter(function(x){ return !(x % 2); })
     .map(function(x){ return x * 2; })
-    .take(5)
+    .take(2)
     .onValue(function(val){ console.log('VALUE', val); });
 
 //var callbackStream = Tix.fromCallback(function(cb){

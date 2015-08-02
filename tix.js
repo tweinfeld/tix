@@ -18,7 +18,7 @@
     var logTemplate = _.template('<<%-type%>> <%-value%>');
 
     // Tix's basic stream creation routine (rudimentary building block)
-    Tix.create = function(generator){
+    Tix.stream = function(generator){
         var _this = this;
         var voidStream = function(){
             deactivate();
@@ -82,7 +82,7 @@
             },
             take: function(count){
                 var counter = 0;
-                return Tix.create(function(value, error, end){
+                return Tix.stream(function(value, error, end){
                     var sub = function(rawVal){
                         value(rawVal);
                         (rawVal instanceof TixValue) && (++counter >= count) && end();
@@ -93,10 +93,24 @@
                 });
             },
             map: function(mapper){
-                return Tix.create(function(value, error, end){
+                return Tix.stream(function(value){
                      var sub = function(rawVal){
                         value(rawVal instanceof TixValue ? mapper(rawVal.value()) : rawVal);
                      };
+
+                    addSubscriber(sub);
+                    return _.partial(removeSubscriber, sub);
+                });
+            },
+            filter: function(filter){
+                return Tix.stream(function(value){
+                    var sub = function(rawVal){
+                        if(rawVal instanceof TixValue){
+                            filter(rawVal.value()) && value(rawVal.value());
+                        } else {
+                            value(rawVal);
+                        };
+                    };
 
                     addSubscriber(sub);
                     return _.partial(removeSubscriber, sub);
@@ -107,7 +121,7 @@
     };
 
     Tix.fromCallback = function(generator){
-        return Tix.create(function(value, error, end){
+        return Tix.stream(function(value, error, end){
             generator(function(val){
                 value(val);
                 end();
