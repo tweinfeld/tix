@@ -19,16 +19,16 @@ var stream = Tix.stream(function(value, error, end){
 
 });
 
+var callbackStream = Tix.fromCallback(function(cb){
+    setTimeout(function(){
+        cb('Callback was called');
+    }, 2000);
+});
+
 var c = console.log.bind(console);
 stream
-    .filter(function(x){ return !(x % 2); })
-    .map(function(x){ return x * 2; })
+    .merge(callbackStream)
     .take(2)
-    .onValue(function(val){ console.log('VALUE', val); });
+    .log();
 
-//var callbackStream = Tix.fromCallback(function(cb){
-//    setTimeout(function(){
-//        cb('Callback was called');
-//    }, 1000);
-//}).log();
 

@@ -102,6 +102,28 @@
                     return _.partial(removeSubscriber, sub);
                 });
             },
+            merge: function(stream){
+
+                var streams = _.toArray(arguments);
+
+                return Tix.stream(function(value){
+
+                    var streamsRegistrars = _(streams).pluck('subscribe').push(addSubscriber).value();
+                    var sendEnd = _.after(streamsRegistrars.length, value);
+                    var handlers = _(streamsRegistrars).map(function(registrar){
+                        var endOnce = _.once(sendEnd),
+                            sub = function(rawVal){
+                                rawVal instanceof TixEnd ? endOnce(rawVal) : value(rawVal);
+                            };
+                        registrar(sub);
+                        return sub;
+                    }).value();
+
+                    return function(){
+                        _(streams).pluck('unsubscribe').push(removeSubscriber).zip(handlers).forEach(function(arr){ arr[0](arr[1]); }).value();
+                    }
+                });
+            },
             filter: function(filter){
                 return Tix.stream(function(value){
                     var sub = function(rawVal){
