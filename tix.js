@@ -1,4 +1,4 @@
-(function(Tix, _){
+(function(Tix, _, window){
 
     // Data-type factory
     var typeFactory = function(typeName){
@@ -75,8 +75,9 @@
                 removeSubscriber(_(subscribers).filter(function(s){ return s.original === subscriber; }).first());
             },
             log: function(){
+                var args = _.toArray(arguments);
                 addSubscriber(function(val){
-                    console.log(logTemplate({ type: val.type, value: val.value() }));
+                    console.log.apply(console, args.concat([logTemplate({ type: val.type, value: val.value() })]));
                 });
                 return interface;
             },
@@ -103,9 +104,7 @@
                 });
             },
             merge: function(stream){
-
                 var streams = _.toArray(arguments);
-
                 return Tix.stream(function(value){
 
                     var streamsRegistrars = _(streams).pluck('subscribe').push(addSubscriber).value();
@@ -131,7 +130,7 @@
                             filter(rawVal.value()) && value(rawVal.value());
                         } else {
                             value(rawVal);
-                        };
+                        }
                     };
 
                     addSubscriber(sub);
@@ -155,7 +154,7 @@
         return Tix.stream(function(value){
             var timer;
             (function span(){
-                timer = setTimeout(function(){
+                timer = window.setTimeout(function(){
                     value(poll());
                     span();
                 }, interval);
@@ -172,4 +171,13 @@
         return args.shift().merge.apply(null, args);
     };
 
-})(window["Tix"] = {}, _);
+    Tix.promise = function(generator){
+       return new Tix.stream(function(value, error, end){
+           generator(
+               _.flow(value, end),
+               _.flow(error, end)
+           );
+       });
+    };
+
+})(window["Tix"] = {}, _, window);
