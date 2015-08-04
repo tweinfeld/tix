@@ -1,4 +1,4 @@
-(function(Tix){
+(function(Tix, _){
 
     // Data-type factory
     var typeFactory = function(typeName){
@@ -149,6 +149,27 @@
                 end();
             });
         });
-    }
+    };
 
-})(window["Tix"] = {});
+    Tix.fromPoll = function(interval, poll){
+        return Tix.stream(function(value){
+            var timer;
+            (function span(){
+                timer = setTimeout(function(){
+                    value(poll());
+                    span();
+                }, interval);
+            })();
+
+            return function(){
+                clearInterval(timer);
+            }
+        });
+    };
+
+    Tix.mergeAll = function(){
+        var args = _.toArray(arguments);
+        return args.shift().merge.apply(null, args);
+    };
+
+})(window["Tix"] = {}, _);
