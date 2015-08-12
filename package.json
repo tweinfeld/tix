@@ -29,7 +29,11 @@
     "url": "https://github.com/tweinfeld/tix/issues"
   },
   "homepage": "https://github.com/tweinfeld/tix",
-  "dependencies": {
-    "lodash": "^3.10.0"
+  "devDependencies": {
+    "gulp": "^3.9.0"
+  },
+  "peerDependencies": {
+    "gulp-concat": "^2.6.0",
+    "gulp-wrap": "^0.11.0"
   }
 }
