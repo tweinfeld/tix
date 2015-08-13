@@ -91,7 +91,7 @@ var Tix = (function(console){
         ].filter(function(o){ return o.type.isPrototypeOf(tixVal); }).pop()["caption"];
     };
 
-    var TixLinkFactory = function(generator){
+    var TixLinkFactory = function(generator, subscriptionModifiers){
 
         var subscribers = subscriptionFactory(),
             activator = _.once(generator.bind(undefined, proxyStubTemplate(function(val){ sink(val); }))),
@@ -106,7 +106,7 @@ var Tix = (function(console){
             };
 
         _.extend(subscribers, {
-            onSubscriber: function(){ deactivator = _.once(activator() || _.noop); },
+            onSubscriber: _.compose(function(subscriber){ deactivator = activator(); return subscriber; }, (subscriptionModifiers || {}).onSubscriber || _.noop),
             onEmpty: _.once(function(){ sink(Object.create(TixEnd)); })
         });
 
@@ -157,16 +157,41 @@ var Tix = (function(console){
             },
             merge: function(){
                 var args = _.argsToArray(arguments);
+
                 return TixLinkFactory(function(sink){
+                    var endSink = _.after(sink, args.length + 1);
+                    var sinkFilter = function(val){
+                        (TixEnd.isPrototypeOf(val) ? endSink : sink)(val);
+                    };
+
                     [subscribers.add.bind(subscribers)]
                         .concat(args.map(function(stream){ return stream.subscribe; }))
-                        .forEach(function(add){ add.call(undefined, sink); });
+                        .forEach(function(add){ add.call(undefined, sinkFilter); });
 
                     return function(){
                         [subscribers.remove.bind(subscribers)]
                             .concat(args.map(function(stream){ return stream.unsubscribe; }))
-                            .forEach(function(remove){ remove.call(undefined, sink); });
+                            .forEach(function(remove){ remove.call(undefined, sinkFilter); });
                     };
+                });
+            },
+            delay: function(milliseconds){
+                var buffer = [];
+                return TixLinkFactory(function(sink){
+                    var timer,
+                        sub = function(val){ TixValue.isPrototypeOf(val) ? (timer = setTimeout(sink.bind(sink, val), milliseconds)) : sink(val); }
+                    return _.compose(subscribers.remove.bind(subscribers, subscribers.add(sub)), clearInterval.bind(window, timer));
+                });
+            },
+            scan: function(scanFunctor, seed){
+                return TixLinkFactory(function(sink){
+
+                    var memo = seed,
+                        counter = 0,
+                        valueSink = function(val){ ((seed === undefined) && (!counter++)) ? memo = val : sink.value(memo = scanFunctor(memo, val)); },
+                        sub = function(val){ TixValue.isPrototypeOf(val) ? valueSink(val.value) : sink(val); };
+
+                    return subscribers.remove.bind(subscribers, subscribers.add(sub));
                 });
             },
             onValue: function(listener){
@@ -234,6 +259,14 @@ var Tix = (function(console){
         },
         interval: function(interval, value){
             return TixNS.sequentially(interval, [value]);
+        },
+        scalar: function(value){
+            var currentValue = value;
+            return TixLinkFactory(_.noop, {
+                onSubscriber: function(subscriber){
+                    currentValue && subscriber(_.extend(Object.create(TixValue), { value: value }));
+                }
+            });
         }
     };
 

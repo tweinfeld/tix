@@ -16,6 +16,23 @@ var _ = {
             catch(e) { return undefined; }
         }
     },
+    curry: function(func, ary){
+        ary = ary || func.length;
+        var accumulatedArgs = [];
+        return function next(){
+            return accumulatedArgs.push.apply(accumulatedArgs, _.argsToArray(arguments)) >= ary ? func.apply(undefined, accumulatedArgs) : next;
+        }
+    },
+    after: function(func, count){
+        var counter = 0;
+        return function(){
+            return (counter = Math.min(counter+1, count)) >= count ? func.apply(undefined, _.argsToArray(arguments)) : undefined;
+        };
+    },
+    property: function(path){
+        var section = function(field, source){ return source !== undefined ? source[field] : source; };
+        return _.compose.apply(undefined, path.split('.').map(function(field){ return section.bind(undefined, field); }));
+    },
     argsToArray: function (args) {
         return Array.prototype.slice.call(args);
     },
