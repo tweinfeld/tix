@@ -155,6 +155,16 @@ var Tix = (function(console){
                     return subscribers.remove.bind(subscribers, subscribers.add(sub));
                 });
             },
+            flatMap: function(mapper, concurrency){
+                return TixLinkFactory(function(sink){
+                    var sub = function(val){
+                        mapper(val.value).subscribe(function(val){
+                            !TixEnd.isPrototypeOf(val) && sink(val);
+                        });
+                    };
+                    return subscribers.remove.bind(subscribers, subscribers.add(sub));
+                });
+            },
             merge: function(){
                 var args = _.argsToArray(arguments);
 
@@ -185,7 +195,6 @@ var Tix = (function(console){
             },
             scan: function(scanFunctor, seed){
                 return TixLinkFactory(function(sink){
-
                     var memo = seed,
                         counter = 0,
                         valueSink = function(val){ ((seed === undefined) && (!counter++)) ? memo = val : sink.value(memo = scanFunctor(memo, val)); },
