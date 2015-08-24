@@ -2,15 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title></title>
+    <title>Tix Demo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.0/lodash.js"></script>
-    <script src="../tix_stand_alone.js"></script>
-    <!--<script src="demo.js"></script>-->
+    <script src="jsonp.js"></script>
+    <script src="../dist/tix.js"></script>
 </head>
 <body>
     <script>
 
-        var a = Tix();
+        Tix
+            .sequentially(1000, [1,2,3,4,5])
+            .take(5)
+            .merge(Tix.sequentially(500, ["-","*"]).take(5))
+            .merge(Tix.fromNodeCallback(jsonp.bind(undefined, 'https://api.ipify.org/?format=jsonp')))
+            .merge(Tix.later(2000, { "Test": "Message" }))
+            .merge(Tix.stream(function(sink){
+                setInterval(function(){
+                    sink.value("CUSTOM SINK");
+                }, 1000);
+            }).take(5))
+            .log();
 
     </script>
 </body>
