@@ -106,7 +106,7 @@ var Tix = (function(console){
             };
 
         _.extend(subscribers, {
-            onSubscriber: _.compose(function(subscriber){ deactivator = activator(); return subscriber; }, (subscriptionModifiers || {}).onSubscriber || _.noop),
+            onSubscriber: _.compose(function(subscriber){ deactivator = activator() || _.noop; return subscriber; }, (subscriptionModifiers || {}).onSubscriber || _.noop),
             onEmpty: _.once(function(){ sink(Object.create(TixEnd)); })
         });
 
