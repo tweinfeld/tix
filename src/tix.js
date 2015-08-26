@@ -83,12 +83,36 @@ var Tix = (function(console){
         });
     };
 
+    var tixTypeCaption = [
+        { "type": TixValue, "caption": "Value" },
+        { "type": TixError, "caption": "Error" },
+        { "type": TixEnd, "caption": "End" }
+    ];
+
     var typeCaptionTemplate = function(tixVal){
-        return  [
-            { "type": TixValue, "caption": "Value" },
-            { "type": TixError, "caption": "Error" },
-            { "type": TixEnd, "caption": "End" }
-        ].filter(function(o){ return o.type.isPrototypeOf(tixVal); }).pop()["caption"];
+        return  tixTypeCaption.filter(function(o){ return o.type.isPrototypeOf(tixVal); }).pop()["caption"];
+    };
+
+    var onTypeListenersTemplate = function(subscribers, iface){
+        console.log(iface)
+        return _.extend.apply(undefined, [TixValue, TixError, TixEnd].map(function(TixType){
+            var name = tixTypeCaption.filter(function(o){ return o.type === TixType }).pop()["caption"],
+                obj = {};
+
+            obj["on"+name] = function(listener){
+                var sub = function(val){ TixType.isPrototypeOf(val) && listener(val.value); };
+                sub.ref = listener;
+                subscribers.add(sub);
+                return iface;
+            };
+
+            obj["off"+name] = function(listener){
+                subscribers.remove(subscribers.subscribers.filter(function(sub){ return sub.ref === listener })[0]);
+                return iface;
+            };
+
+            return obj;
+        }));
     };
 
     var TixLinkFactory = function(generator, subscriptionModifiers){
@@ -110,7 +134,9 @@ var Tix = (function(console){
             onEmpty: _.once(function(){ sink(Object.create(TixEnd)); })
         });
 
-        var iface = _.extend(Object.create(TixLink), {
+        var iface = Object.create(TixLink);
+
+        _.extend(iface, {
             log: function(){
                 var args = _.argsToArray(arguments);
                 subscribers.add(function(val){
@@ -136,7 +162,7 @@ var Tix = (function(console){
                 return TixLinkFactory(function(sink){
                     var sub = function(val){
                         TixValue.isPrototypeOf(val) && (lastValue = val);
-                        TixEnd.isPrototypeOf(val) && !sink(lastValue) && sink(val);
+                        TixEndfro.isPrototypeOf(val) && !sink(lastValue) && sink(val);
                     };
                     return subscribers.remove.bind(subscribers, subscribers.add(sub));
                 });
@@ -145,7 +171,7 @@ var Tix = (function(console){
                 mapper = _.isFunction(mapper) ? mapper : _.constant(mapper);
                 return TixLinkFactory(function(sink){
                     var sub = function(val){ TixValue.isPrototypeOf(val) ? sink.value(mapper(val.value)) : sink(val); };
-                    return subscribers.remove.bind(subscribers, subscribers.add(sub));
+                         return subscribers.remove.bind(subscribers, subscribers.add(sub));
                 });
             },
             filter: function(filter){
@@ -213,9 +239,33 @@ var Tix = (function(console){
                 subscribers.remove(subscribers.subscribers.filter(function(sub){ return sub.ref === listener })[0]);
                 return iface;
             },
+            onEnd: function(listener){
+                var sub = function(val){ TixEnd.isPrototypeOf(val) && listener(val.value); };
+                sub.ref = listener;
+                subscribers.add(sub);
+                return iface;
+            },
+            offEnd: function(listener){
+                subscribers.remove(subscribers.subscribers.filter(function(sub){ return sub.ref === listener })[0]);
+                return iface;
+            },
+            onError: function(listener){
+                var sub = function(val){ TixError.isPrototypeOf(val) && listener(val.value); };
+                sub.ref = listener;
+                subscribers.add(sub);
+                return iface;
+            },
+            offError: function(listener){
+                var sub = function(val){ TixError.isPrototypeOf(val) && listener(val.value); };
+                sub.ref = listener;
+                subscribers.add(sub);
+                return iface;
+            },
             subscribe: _.compose(subscribers.add.bind(subscribers), _.constant(iface)),
             unsubscribe: _.compose(subscribers.remove.bind(subscribers), _.constant(iface))
-        });
+        },
+            onTypeListenersTemplate(subscribers, iface)
+        );
 
         return iface;
     };
@@ -266,7 +316,7 @@ var Tix = (function(console){
                 return clearInterval.bind(undefined, timer);
             });
         },
-        interval: function(interval, value){
+        interval: function(interval, vintealue){
             return TixNS.sequentially(interval, [value]);
         },
         scalar: function(value){
