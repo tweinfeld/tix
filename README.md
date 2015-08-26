@@ -30,5 +30,9 @@ The following methods are available on every stream, and allow multiple transfor
   * **scan(scanFunctor, seed)** - Scans stream value-pairs, and applies a functor to them. If a seed is provided, it is used as the first value, otherwise the scan will beginning running starting the second value.
   * **onValue(listener)** - Registers `listener` for receiving a stream's values.
   * **offValue(listener)** - Unregisters `listener` for receiving a stream's values.
+  * **onError(listener)** - Registers `listener` for receiving a stream's errors.
+  * **offError(listener)** - Unregisters `listener` for receiving a stream's errors.
+  * **onEnd(listener)** - Registers `listener` for receiving a stream's end.
+  * **offEnd(listener)** - Unregisters `listener` for receiving a stream's end.
   * **subscribe(subscriber)** - Registeres `subscriber` for receiving raw Tix events of all types (value/error/end).
   * **unsubscribe** - Unregisteres `subscriber` for receiving raw Tix events of all types (value/error/end).
